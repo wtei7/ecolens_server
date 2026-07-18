@@ -1,0 +1,58 @@
+"""Auth-related Pydantic schemas."""
+from __future__ import annotations
+
+from datetime import datetime
+
+from pydantic import EmailStr, Field, model_validator
+
+from app.schemas.common import CamelModel
+
+
+class SignupRequest(CamelModel):
+    nickname: str = Field(min_length=2, max_length=64)
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=128)
+    password_confirm: str = Field(min_length=8, max_length=128)
+
+    @model_validator(mode="after")
+    def _check_password_match(self) -> "SignupRequest":
+        if self.password != self.password_confirm:
+            raise ValueError("password and passwordConfirm do not match")
+        return self
+
+
+class LoginRequest(CamelModel):
+    email: EmailStr
+    password: str
+
+
+class TokenResponse(CamelModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+
+
+class UserOut(CamelModel):
+    id: int
+    email: EmailStr
+    nickname: str
+    total_distance: int = 0
+    total_duration: int = 0
+    total_cleaned_count: int = 0
+    total_score: int = 0
+    created_at: datetime
+
+    model_config = {**CamelModel.model_config, "from_attributes": True}
+
+
+class SignupResponse(CamelModel):
+    id: int
+    email: EmailStr
+    nickname: str
+
+
+class StatisticsResponse(CamelModel):
+    total_distance: int
+    total_duration: int
+    total_cleaned_count: int
+    total_score: int
